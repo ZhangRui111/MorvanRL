@@ -9,7 +9,6 @@ gym: 0.7.3
 """
 
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 
 np.random.seed(1)
@@ -21,11 +20,11 @@ class DeepQNetwork:
     def __init__(
             self,
             n_actions,
-            n_features,  # how many observation, such as length\width\height.
+            n_features,  # how many features observation has, such as length\width\height.
             learning_rate=0.01,
             reward_decay=0.9,
             e_greedy=0.9,
-            replace_target_iter=300,
+            replace_target_iter=300,  # interval to update target-net's params
             memory_size=500,
             batch_size=32,
             e_greedy_increment=None,
@@ -35,12 +34,12 @@ class DeepQNetwork:
         self.n_features = n_features
         self.lr = learning_rate
         self.gamma = reward_decay
-        self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
         self.epsilon_max = e_greedy
-        self.replace_target_iter = replace_target_iter  # interval to update target-net's params
+        self.replace_target_iter = replace_target_iter
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.epsilon_increment = e_greedy_increment
+        self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
 
         # total learning step
         self.learn_step_counter = 0  # used to update epsilon.
@@ -70,7 +69,7 @@ class DeepQNetwork:
 
     def _build_net(self):
         # ------------------ build evaluate_net ------------------ #
-        # input -- current state, to calculate Q-eval -- every actions' Q-value.
+        # input, to calculate q_eval -- every actions' Q-value.
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')
         # Q-real, for calculating loss, get from target-net.
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')
@@ -101,7 +100,7 @@ class DeepQNetwork:
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
         # ------------------ build target_net ------------------ #
-        # input -- next state.
+        # input, for calculating q_next.
         self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')
         with tf.variable_scope('target_net'):
             # c_names(collections_names) are the collections to store variables
@@ -126,9 +125,9 @@ class DeepQNetwork:
         if not hasattr(self, 'memory_counter'):
             self.memory_counter = 0
 
-        transition = np.hstack((s, [a, r], s_))
+        transition = np.hstack((s, [a, r], s_))  # e.g. [-0.5  -0.5   2.    0.   -0.25 -0.5 ]
 
-        # replace the old memory with new memory
+        # cyclic replace the old memory with new memory
         index = self.memory_counter % self.memory_size
         self.memory[index, :] = transition
 
@@ -164,22 +163,27 @@ class DeepQNetwork:
             [self.q_next, self.q_eval],
             feed_dict={
                 # RL.store_transition(observation, action, reward, observation_)
-                # newest params, the first self.n_features paras in batch_memory
+                # newest params, the first self.n_features paras in batch_memory's every row.
                 self.s: batch_memory[:, :self.n_features],
-                # fixed params, the last self.n_features paras in batch_memory
+                # fixed params, the last self.n_features paras in batch_memory's every row.
                 self.s_: batch_memory[:, -self.n_features:],
             })
+        # q_next.shape = (32, 4)
+        # q_eval.shape = (32, 4)
 
         # change q_target w.r.t(wrought) q_eval's action
-        q_target = q_eval.copy()
+        q_target = q_eval.copy()  # q_target.shape = (32, 4)
 
         batch_index = np.arange(self.batch_size, dtype=np.int32)
-        eval_act_index = batch_memory[:, self.n_features].astype(int)
-        reward = batch_memory[:, self.n_features + 1]
+
+        eval_act_index = batch_memory[:, self.n_features].astype(int)  # e.g. [1, 2, 1, 1, ...] (32,)
+        reward = batch_memory[:, self.n_features + 1]  # e.g. [0, -1.0, 0, ...,0, 1] (32,)
 
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
 
         """
+        Chinese annotation in https://morvanzhou.github.io/tutorials/machine-learning/reinforcement-learning/4-3-DQN3/
+        
         For example in this batch I have 2 samples and 3 actions:
         q_eval =
         [[1, 2, 3],

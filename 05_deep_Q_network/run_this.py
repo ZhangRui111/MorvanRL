@@ -1,5 +1,5 @@
 from maze_env import Maze
-from RL_brain import DeepQNetwork
+from DQN_modified import DeepQNetwork
 
 
 # In order to successfully import these, you need to move 'RL_brain.py' and 'maze_env.py' to MorvanRL/
@@ -7,8 +7,9 @@ from RL_brain import DeepQNetwork
 def run_maze():
     step = 0
     for episode in range(300):
+
         # initial observation
-        observation = env.reset()
+        observation = env.reset()  # e.g.[-0.5 -0.5]
 
         while True:
             # fresh env
@@ -47,7 +48,7 @@ if __name__ == "__main__":
                       e_greedy=0.9,
                       replace_target_iter=200,
                       memory_size=2000,
-                      # output_graph=True  # True will produce a tensorboard log file.
+                      output_graph=True  # True will produce a tensorboard log file.
                       )
     env.after(100, run_maze)
     env.mainloop()
