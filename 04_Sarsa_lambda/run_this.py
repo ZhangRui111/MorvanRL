@@ -20,7 +20,7 @@ def update():
 
         # initial all zero eligibility trace
         RL.eligibility_trace *= 0
-        print('*************************')
+        # print('*************************')
 
         while True:
             # fresh env

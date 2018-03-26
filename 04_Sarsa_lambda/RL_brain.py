@@ -90,5 +90,5 @@ class SarsaLambdaTable(RL):
 
         # decay eligibility trace after update
         self.eligibility_trace *= self.gamma*self.lambda_
-        print(self.eligibility_trace)
+        # print(self.eligibility_trace)
 
