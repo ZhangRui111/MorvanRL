@@ -89,9 +89,13 @@ class DeepQNetwork:
         with tf.variable_scope('q_target'):
             q_target = self.r + self.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')    # shape=(None, )
             self.q_target = tf.stop_gradient(q_target)
+            # # tf.stop_gradient:
         with tf.variable_scope('q_eval'):
             a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
+            # axis=1 --> a_indices: [[0, a0], [1, a1], [2, a2], ...]
             self.q_eval_wrt_a = tf.gather_nd(params=self.q_eval, indices=a_indices)    # shape=(None, )
+            # # tf.stack
+            # # tf.gather_nd
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval_wrt_a, name='TD_error'))
         with tf.variable_scope('train'):
@@ -156,3 +160,47 @@ class DeepQNetwork:
 
 if __name__ == '__main__':
     DQN = DeepQNetwork(3, 4, output_graph=True)
+
+# # tf.stop_gradient
+# refer to: https://blog.csdn.net/u012436149/article/details/53905797
+# Stops gradient computation.
+# When building ops to compute gradients, this op prevents the contribution of its inputs to be taken
+# into account. Normally, the gradient generator adds ops to a graph to compute the derivatives of a
+# specified 'loss' by recursively finding out inputs that contributed to its computation. If you insert
+# this op in the graph it inputs are masked from the gradient generator. They are not taken into account
+# for computing gradients.
+
+# # tf.stack
+# Stacks a list of rank-R tensors into one rank-(R+1) tensor.
+# if axis == 0 then the output tensor will have the shape (N, A, B, C).
+# if axis == 1 then the output tensor will have the shape (A, N, B, C). Etc.
+#
+# For example:
+#
+# x = tf.constant([1, 4])
+# y = tf.constant([2, 5])
+# z = tf.constant([3, 6])
+# tf.stack([x, y, z])  # [[1, 4], [2, 5], [3, 6]] (Pack along first dim.)
+# tf.stack([x, y, z], axis=1)  # [[1, 2, 3], [4, 5, 6]]
+
+
+# # tf.gather_nd
+# tf.gather_nd(
+#     params,
+#     indices,
+#     name=None
+# )
+# Gather slices from params into a Tensor with shape specified by indices.
+
+# Some examples below.
+#
+# Simple indexing into a matrix:
+#
+#     indices = [[0, 0], [1, 1]]
+#     params = [['a', 'b'], ['c', 'd']]
+#     output = ['a', 'd']
+# Slice indexing into a matrix:
+#
+#     indices = [[1], [0]]
+#     params = [['a', 'b'], ['c', 'd']]
+#     output = [['c', 'd'], ['a', 'b']]

@@ -159,14 +159,19 @@ class DeepQNetwork:
             sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
         batch_memory = self.memory[sample_index, :]
 
+        observation = batch_memory[:, :self.n_features]
+        eval_act_index = batch_memory[:, self.n_features].astype(int)  # e.g. [1, 2, 1, 1, ...] (32,)
+        reward = batch_memory[:, self.n_features + 1]  # e.g. [0, -1.0, 0, ...,0, 1] (32,)
+        observation_ = batch_memory[:, -self.n_features:]
+
         q_next, q_eval = self.sess.run(
             [self.q_next, self.q_eval],
             feed_dict={
                 # RL.store_transition(observation, action, reward, observation_)
                 # newest params, the first self.n_features paras in batch_memory's every row.
-                self.s: batch_memory[:, :self.n_features],
+                self.s: observation,
                 # fixed params, the last self.n_features paras in batch_memory's every row.
-                self.s_: batch_memory[:, -self.n_features:],
+                self.s_: observation_,
             })
         # q_next.shape = (32, 4)
         # q_eval.shape = (32, 4)
@@ -175,10 +180,6 @@ class DeepQNetwork:
         q_target = q_eval.copy()  # q_target.shape = (32, 4)
 
         batch_index = np.arange(self.batch_size, dtype=np.int32)
-
-        eval_act_index = batch_memory[:, self.n_features].astype(int)  # e.g. [1, 2, 1, 1, ...] (32,)
-        reward = batch_memory[:, self.n_features + 1]  # e.g. [0, -1.0, 0, ...,0, 1] (32,)
-
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
 
         """
