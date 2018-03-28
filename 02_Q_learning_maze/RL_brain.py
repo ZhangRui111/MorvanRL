@@ -22,7 +22,8 @@ class QLearningTable:
         # action selection
         if np.random.uniform() < self.epsilon:
             # choose best action
-            state_action = self.q_table.loc[observation, :]
+            a = self.q_table
+            state_action = self.q_table.loc[observation, :]  # self.q_table's rows' index is a four-elements list.
             # some actions may have same value.
             # # DataFrame.idxmax(axis=0, skipna=True)
             # Return index of first occurrence of maximum over requested axis. So if there are some

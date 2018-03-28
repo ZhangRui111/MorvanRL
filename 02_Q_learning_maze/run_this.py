@@ -17,7 +17,7 @@ from RL_brain import QLearningTable
 def update():
     for episode in range(100):
         # initial observation
-        observation = env.reset()
+        observation = env.reset()  # <class 'list'>: [5.0, 5.0, 35.0, 35.0]
 
         while True:
             # fresh env
