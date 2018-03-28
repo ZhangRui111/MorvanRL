@@ -168,10 +168,10 @@ class DeepQNetwork:
             [self.q_next, self.q_eval],
             feed_dict={
                 # RL.store_transition(observation, action, reward, observation_)
-                # newest params, the first self.n_features paras in batch_memory's every row.
-                self.s: observation,
                 # fixed params, the last self.n_features paras in batch_memory's every row.
                 self.s_: observation_,
+                # newest params, the first self.n_features paras in batch_memory's every row.
+                self.s: observation,
             })
         # q_next.shape = (32, 4)
         # q_eval.shape = (32, 4)
