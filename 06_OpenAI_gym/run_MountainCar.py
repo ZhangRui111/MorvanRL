@@ -8,7 +8,7 @@ gym: 0.8.0
 # In order to successfully import these, you need to move 'RL_brain.py' to MorvanRL/
 
 import gym
-from RL_brain import DeepQNetwork
+from DQN_modified import DeepQNetwork
 
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
