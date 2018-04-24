@@ -71,7 +71,7 @@ def train(RL):
         if total_steps > MEMORY_SIZE:   # learning
             RL.learn()
 
-        if total_steps - MEMORY_SIZE > 20000:   # stop game
+        if total_steps - MEMORY_SIZE > 20000:   # stop game 20000
             break
 
         observation = observation_
