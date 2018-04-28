@@ -6,7 +6,6 @@ Tensorflow: 1.0
 gym: 0.8.0
 """
 
-
 import gym
 from RL_brain import DQNPrioritizedReplay
 import matplotlib as mlp
@@ -21,6 +20,7 @@ env.seed(21)
 MEMORY_SIZE = 10000
 
 sess = tf.Session()
+
 with tf.variable_scope('natural_DQN'):
     RL_natural = DQNPrioritizedReplay(
         n_actions=3, n_features=2, memory_size=MEMORY_SIZE,
@@ -32,6 +32,7 @@ with tf.variable_scope('DQN_with_prioritized_replay'):
         n_actions=3, n_features=2, memory_size=MEMORY_SIZE,
         e_greedy_increment=0.00005, sess=sess, prioritized=True, output_graph=True,
     )
+
 sess.run(tf.global_variables_initializer())
 
 
@@ -48,7 +49,8 @@ def train(RL):
 
             observation_, reward, done, info = env.step(action)
 
-            if done: reward = 10
+            if done:
+                reward = 10
 
             RL.store_transition(observation, action, reward, observation_)
 
@@ -63,6 +65,7 @@ def train(RL):
 
             observation = observation_
             total_steps += 1
+
     return np.vstack((episodes, steps))
 
 
