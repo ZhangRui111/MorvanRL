@@ -102,6 +102,8 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
         self.tree.add(max_p, transition)  # set the max p for new p
 
     def sample(self, n):
+        # tt = self.tree.tree
+        # dd = self.tree.data
         b_idx, b_memory, ISWeights = np.empty((n,), dtype=np.int32), np.empty((n, self.tree.data[0].size)), np.empty(
             (n, 1))
         pri_seg = self.tree.total_p / n  # priority segment
@@ -113,6 +115,8 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
             v = np.random.uniform(a, b)
             idx, p, data = self.tree.get_leaf(v)
             prob = p / self.tree.total_p
+            # aa = prob
+            # bb = min_prob
             ISWeights[i, 0] = np.power(prob / min_prob, -self.beta)
             b_idx[i], b_memory[i, :] = idx, data
         return b_idx, b_memory, ISWeights

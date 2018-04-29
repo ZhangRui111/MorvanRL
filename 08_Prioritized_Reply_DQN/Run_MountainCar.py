@@ -17,7 +17,7 @@ import numpy as np
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
 env.seed(21)
-MEMORY_SIZE = 10000
+MEMORY_SIZE = 10000  # 10000
 
 sess = tf.Session()
 
