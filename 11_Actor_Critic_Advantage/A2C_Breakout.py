@@ -10,7 +10,7 @@ import os
 import tensorflow as tf
 import time
 
-from utils import write_file, plot_rewards
+from utils import write_file, plot_rewards, restore_parameters, save_parameters
 
 # np.random.seed(2)
 # tf.set_random_seed(2)  # reproducible
@@ -23,12 +23,16 @@ RENDER = False  # rendering wastes time
 CROP_SIZE = 80
 N_A = 4
 DISPLAY_REWARD_THRESHOLD = 100  # renders environment if total episode reward is greater then this threshold
+SAVED_INTERVAL = 2000
+y_axis_ticks = [-10, 0, 10]
+weights_path = './logs/Breakout/weights/'
+data_path = './logs/Breakout/data/'
 
 
 MAX_EPISODE = 50001
-GAMMA = 0.9  # reward discount in TD error
-LR_A = 0.0001  # learning rate for actor
-LR_C = 0.001  # learning rate for critic
+GAMMA = 0.9  # reward discount in TD error: 0.9
+LR_A = 0.0001  # learning rate for actor: 0.0001
+LR_C = 0.001  # learning rate for critic: 0.001
 
 
 def preprocess_image(img):
@@ -50,19 +54,12 @@ class Actor(object):
             input_crop = self.s / 255
             input = tf.transpose(input_crop, [1, 2, 0])
             conv1 = tf.contrib.layers.conv2d(inputs=input[np.newaxis, :], num_outputs=32, kernel_size=8, stride=4)
-            conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=64, kernel_size=4, stride=2)
-            conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=64, kernel_size=3, stride=1)
+            conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=32, kernel_size=4, stride=2)
+            conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=32, kernel_size=3, stride=1)
 
             flat = tf.contrib.layers.flatten(conv3)
             f = tf.contrib.layers.fully_connected(flat, 512)
-            self.acts_prob = tf.layers.dense(
-                inputs=f,
-                units=n_actions,  # output units
-                activation=tf.nn.softmax,  # get action probabilities
-                kernel_initializer=tf.random_normal_initializer(0., .01),  # weights
-                bias_initializer=tf.constant_initializer(0.1),  # biases
-                name='acts_prob'
-            )
+            self.acts_prob = tf.contrib.layers.fully_connected(f, n_actions, activation_fn=tf.nn.softmax)
 
         with tf.variable_scope('exp_v'):
             log_prob = tf.log(self.acts_prob[0, self.a])
@@ -80,8 +77,8 @@ class Actor(object):
     def choose_action(self, s):
         s = s[np.newaxis, :]
         probs = self.sess.run(self.acts_prob, {self.s: s})  # get probabilities for all actions
-        print(probs)
-        return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())  # return a int
+        action = np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())
+        return action, probs.flatten()
 
 
 class Critic(object):
@@ -95,19 +92,12 @@ class Critic(object):
             input_crop = self.s / 255
             input = tf.transpose(input_crop, [1, 2, 0])
             conv1 = tf.contrib.layers.conv2d(inputs=input[np.newaxis, :], num_outputs=32, kernel_size=8, stride=4)
-            conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=64, kernel_size=4, stride=2)
-            conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=64, kernel_size=3, stride=1)
+            conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=32, kernel_size=4, stride=2)
+            conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=32, kernel_size=3, stride=1)
 
             flat = tf.contrib.layers.flatten(conv3)
             f = tf.contrib.layers.fully_connected(flat, 512)
-            self.v = tf.layers.dense(
-                inputs=f,
-                units=1,  # output units
-                activation=None,
-                kernel_initializer=tf.random_normal_initializer(0., .01),  # weights
-                bias_initializer=tf.constant_initializer(0.1),  # biases
-                name='V'
-            )
+            self.v = tf.contrib.layers.fully_connected(f, 1, activation_fn=None)
 
         with tf.variable_scope('squared_TD_error'):
             self.td_error = self.r + GAMMA * self.v_ - self.v
@@ -120,7 +110,7 @@ class Critic(object):
 
         v_ = self.sess.run(self.v, {self.s: s_})
         td_error, _ = self.sess.run([self.td_error, self.train_op],
-                                    {self.s: s, self.v_: v_, self.r: r})
+                                    feed_dict={self.s: s, self.v_: v_, self.r: r})
         return td_error
 
 
@@ -142,10 +132,13 @@ def main():
     episode_rewards = []
     running_rewards = []
     total_steps = 0
+    running_reward = -10
+
+    saver, load_episode = restore_parameters(sess, weights_path)
+    write_file(data_path + 'probs.txt', 'probs\n', True)
 
     for i_episode in range(MAX_EPISODE):
         s = env.reset()
-        # pre-processing image
         s = preprocess_image(s)
 
         episode_steps = 0
@@ -153,17 +146,18 @@ def main():
         while True:
             # if RENDER:
             #     env.render()
-            a = actor.choose_action(s)
-
-            if episode_steps % 10 == 0:
+            a, probs = actor.choose_action(s)
+            print(probs)
+            probs = np.around(probs, decimals=4)
+            write_file(data_path + 'probs.txt', str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n', False)
+            if episode_steps % 20 == 0:  # episode_steps % 10 --> reserve the ball.
                 a = 1
 
             s_, r, done, info = env.step(a)
-            # pre-processing image
             s_ = preprocess_image(s_)
 
             if done:
-                r = -20
+                r = -10  # -20
 
             track_r.append(r)
 
@@ -180,22 +174,22 @@ def main():
                 episodes.append(episodes)
                 episode_rewards.append(ep_rs_sum)
 
-                if 'running_reward' not in globals():
-                    running_reward = ep_rs_sum
-                else:
-                    running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
+                running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
 
                 running_rewards.append(running_reward)
 
-                if len(running_rewards) % 2000 == 0:
-                    write_file('./logs/Breakout/rewards_' + str(i_episode) + '.txt', running_rewards, True)
-                    plot_rewards(running_rewards, './logs/Breakout/' + str(i_episode) + '/')
+                if len(running_rewards) % SAVED_INTERVAL == 0:
+                    write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                    plot_rewards(running_rewards, y_axis_ticks, data_path)
+                if i_episode % SAVED_INTERVAL == 0 and i_episode != 0:
+                    save_parameters(sess, weights_path, saver,
+                                    weights_path + '-' + str(load_episode + i_episode))
 
-                if running_reward > DISPLAY_REWARD_THRESHOLD:
-                    RENDER = True  # rendering
+                # if running_reward > DISPLAY_REWARD_THRESHOLD:
+                #     RENDER = True  # rendering
                 print("---------------------------------------------------------------episode:", i_episode,
                       " episode  reward:", ep_rs_sum, " running  reward:", round(running_reward, 4))
-                time.sleep(0.5)
+                # time.sleep(0.5)
                 break
 
 

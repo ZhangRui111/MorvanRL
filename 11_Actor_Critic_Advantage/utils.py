@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import time
+import tensorflow as tf
 
 
 class time_ticker(object):
@@ -51,7 +52,7 @@ def write_file(path, content, overwrite=False):
             f.write(str(content))
     else:
         with open(path, 'a') as f:
-            f.write(content)
+            f.write(str(content))
 
 
 def read_file(path):
@@ -69,13 +70,12 @@ def read_file(path):
     return data
 
 
-def plot_rewards(rewards, savepath=None):
+def plot_rewards(rewards, y_axis_ticks, savepath=None):
     # plt.plot(rewards, label='A2C')
     plt.plot(rewards)
     plt.title('running rewards in CartPole')  # plot figure title
     plt.xlabel('episodes')  # plot figure's x axis name.
     plt.ylabel('running rewards')  # plot figure's y axis name.
-    y_axis_ticks = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]  # range of y axis
     plt.yticks(y_axis_ticks)  # set y axis's ticks
     for items in y_axis_ticks:  # plot some lines that vertical to y axis.
         plt.hlines(items, 0, len(rewards), colors="#D3D3D3", linestyles="dashed")
@@ -97,6 +97,26 @@ def read_plot_rewards(path, save_path):
     for item in running_rewards:
         rewards.append(float(item))
     plot_rewards(rewards, save_path)
+
+
+def restore_parameters(sess, restore_path):
+    saver = tf.train.Saver(max_to_keep=5)
+    checkpoint = tf.train.get_checkpoint_state(restore_path)
+    if checkpoint and checkpoint.model_checkpoint_path:
+        saver.restore(sess, checkpoint.model_checkpoint_path)
+        print("Successfully loaded:", checkpoint.model_checkpoint_path)
+        path_ = checkpoint.model_checkpoint_path
+        step = int((path_.split('-'))[-1])
+    else:
+        # Re-train the network from zero.
+        print("Could not find old network weights")
+        step = 0
+    return saver, step
+
+
+def save_parameters(sess, save_path, saver, name):
+    exist_or_create_folder(save_path)
+    saver.save(sess, name)
 
 
 def main():

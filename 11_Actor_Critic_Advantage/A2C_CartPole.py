@@ -168,7 +168,8 @@ for i_episode in range(MAX_EPISODE):
             # print(len(running_rewards))
             if len(running_rewards) % 1000 == 0:
                 write_file('./logs/CartPole/rewards_' + str(i_episode) + '.txt', running_rewards, True)
-                plot_rewards(running_rewards, './logs/CartPole/' + str(i_episode) + '/')
+                y_axis_ticks = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+                plot_rewards(running_rewards, y_axis_ticks, './logs/CartPole/' + str(i_episode) + '/')
             if running_reward > DISPLAY_REWARD_THRESHOLD:
                 RENDER = True  # rendering
             print("episode:", i_episode, "  reward:", int(running_reward))
