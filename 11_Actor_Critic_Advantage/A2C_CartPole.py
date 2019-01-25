@@ -1,28 +1,25 @@
 """
 Actor-Critic using TD-error as the Advantage, Reinforcement Learning.
 The cart pole example. Policy is oscillated.
-View more on my tutorial page: https://morvanzhou.github.io/tutorials/
-Using:
-tensorflow 1.0
-gym 0.8.0
 """
 
+import gym
 import numpy as np
 import tensorflow as tf
-import gym
+
+from utils import write_file, plot_rewards
 
 np.random.seed(2)
 tf.set_random_seed(2)  # reproducible
 
-# Superparameters
 OUTPUT_GRAPH = False
-MAX_EPISODE = 3000
-DISPLAY_REWARD_THRESHOLD = 200  # renders environment if total episode reward is greater then this threshold
+MAX_EPISODE = 30001
+DISPLAY_REWARD_THRESHOLD = 10000  # renders environment if total episode reward is greater then this threshold
 MAX_EP_STEPS = 1000   # maximum time step in one episode
 RENDER = False  # rendering wastes time
 GAMMA = 0.9     # reward discount in TD error
-LR_A = 0.001    # learning rate for actor
-LR_C = 0.01     # learning rate for critic
+LR_A = 0.01    # learning rate for actor
+LR_C = 0.1     # learning rate for critic
 
 env = gym.make('CartPole-v0')
 env.seed(1)  # reproducible
@@ -133,6 +130,8 @@ sess.run(tf.global_variables_initializer())
 if OUTPUT_GRAPH:
     tf.summary.FileWriter("logs/", sess.graph)
 
+running_rewards = []
+
 for i_episode in range(MAX_EPISODE):
     s = env.reset()
     t = 0
@@ -145,7 +144,8 @@ for i_episode in range(MAX_EPISODE):
 
         s_, r, done, info = env.step(a)
 
-        if done: r = -20
+        if done:
+            r = -20
 
         track_r.append(r)
 
@@ -162,6 +162,12 @@ for i_episode in range(MAX_EPISODE):
                 running_reward = ep_rs_sum
             else:
                 running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
+
+            running_rewards.append(running_reward)
+            # print(len(running_rewards))
+            if len(running_rewards) % 1000 == 0:
+                write_file('./logs/rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                plot_rewards(running_rewards, './logs/' + str(i_episode) + '/')
             if running_reward > DISPLAY_REWARD_THRESHOLD:
                 RENDER = True  # rendering
             print("episode:", i_episode, "  reward:", int(running_reward))
