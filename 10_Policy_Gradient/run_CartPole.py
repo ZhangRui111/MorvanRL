@@ -1,12 +1,3 @@
-"""
-Policy Gradient, Reinforcement Learning.
-The cart pole example
-View more on my tutorial page: https://morvanzhou.github.io/tutorials/
-Using:
-Tensorflow: 1.0
-gym: 0.8.0
-"""
-
 import gym
 from RL_brain import PolicyGradient
 import matplotlib.pyplot as plt
@@ -31,12 +22,13 @@ RL = PolicyGradient(
     # output_graph=True,
 )
 
-for i_episode in range(3000):
+for i_episode in range(1000):
 
     observation = env.reset()
 
     while True:
-        if RENDER: env.render()
+        if RENDER:
+            env.render()
 
         action = RL.choose_action(observation)
 
@@ -51,16 +43,18 @@ for i_episode in range(3000):
                 running_reward = ep_rs_sum
             else:
                 running_reward = running_reward * 0.99 + ep_rs_sum * 0.01
-            if running_reward > DISPLAY_REWARD_THRESHOLD: RENDER = True     # rendering
+            if running_reward > DISPLAY_REWARD_THRESHOLD:
+                RENDER = True     # rendering
             print("episode:", i_episode, "  reward:", int(running_reward))
 
             vt = RL.learn()
 
-            if i_episode == 0:
+            if i_episode == 80:
                 plt.plot(vt)    # plot the episode vt
                 plt.xlabel('episode steps')
                 plt.ylabel('normalized state-action value')
                 plt.show()
+
             break
 
         observation = observation_

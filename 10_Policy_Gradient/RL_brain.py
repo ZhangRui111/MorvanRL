@@ -1,13 +1,3 @@
-"""
-This part of code is the reinforcement learning brain, which is a brain of the agent.
-All decisions are made in here.
-Policy Gradient, Reinforcement Learning.
-View more on my tutorial page: https://morvanzhou.github.io/tutorials/
-Using:
-Tensorflow: 1.0
-gym: 0.8.0
-"""
-
 import numpy as np
 import tensorflow as tf
 
@@ -37,9 +27,6 @@ class PolicyGradient:
         self.sess = tf.Session()
 
         if output_graph:
-            # $ tensorboard --logdir=logs
-            # http://0.0.0.0:6006/
-            # tf.train.SummaryWriter soon be deprecated, use following
             tf.summary.FileWriter("logs/", self.sess.graph)
 
         self.sess.run(tf.global_variables_initializer())
@@ -72,7 +59,8 @@ class PolicyGradient:
 
         with tf.name_scope('loss'):
             # to maximize total reward (log_p * R) is to minimize -(log_p * R), and the tf only have minimize(loss)
-            neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=all_act, labels=self.tf_acts)   # this is negative log of chosen action
+            # this is negative log of chosen action
+            neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=all_act, labels=self.tf_acts)
             # or in this way:
             # neg_log_prob = tf.reduce_sum(-tf.log(self.all_act_prob)*tf.one_hot(self.tf_acts, self.n_actions), axis=1)
             loss = tf.reduce_mean(neg_log_prob * self.tf_vt)  # reward guided loss
@@ -82,7 +70,8 @@ class PolicyGradient:
 
     def choose_action(self, observation):
         prob_weights = self.sess.run(self.all_act_prob, feed_dict={self.tf_obs: observation[np.newaxis, :]})
-        action = np.random.choice(range(prob_weights.shape[1]), p=prob_weights.ravel())  # select action w.r.t the actions prob
+        # select action w.r.t the actions prob
+        action = np.random.choice(range(prob_weights.shape[1]), p=prob_weights.ravel())
         return action
 
     def store_transition(self, s, a, r):

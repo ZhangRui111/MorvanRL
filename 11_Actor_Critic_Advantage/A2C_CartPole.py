@@ -125,7 +125,8 @@ class Critic(object):
 sess = tf.Session()
 
 actor = Actor(sess, n_features=N_F, n_actions=N_A, lr=LR_A)
-critic = Critic(sess, n_features=N_F, lr=LR_C)     # we need a good teacher, so the teacher should learn faster than the actor
+# we need a good teacher, so the teacher should learn faster than the actor
+critic = Critic(sess, n_features=N_F, lr=LR_C)
 
 sess.run(tf.global_variables_initializer())
 
@@ -161,6 +162,7 @@ for i_episode in range(MAX_EPISODE):
                 running_reward = ep_rs_sum
             else:
                 running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
-            if running_reward > DISPLAY_REWARD_THRESHOLD: RENDER = True  # rendering
+            if running_reward > DISPLAY_REWARD_THRESHOLD:
+                RENDER = True  # rendering
             print("episode:", i_episode, "  reward:", int(running_reward))
             break
