@@ -18,8 +18,8 @@ DISPLAY_REWARD_THRESHOLD = 10000  # renders environment if total episode reward 
 MAX_EP_STEPS = 1000   # maximum time step in one episode
 RENDER = False  # rendering wastes time
 GAMMA = 0.9     # reward discount in TD error
-LR_A = 0.01    # learning rate for actor
-LR_C = 0.1     # learning rate for critic
+LR_A = 0.01    # 0.01: learning rate for actor
+LR_C = 0.1     # 0.1: learning rate for critic
 
 env = gym.make('CartPole-v0')
 env.seed(1)  # reproducible
@@ -72,6 +72,7 @@ class Actor(object):
     def choose_action(self, s):
         s = s[np.newaxis, :]
         probs = self.sess.run(self.acts_prob, {self.s: s})   # get probabilities for all actions
+        # print('---------------------' + str(probs) + '---------------------')
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())   # return a int
 
 
@@ -166,8 +167,8 @@ for i_episode in range(MAX_EPISODE):
             running_rewards.append(running_reward)
             # print(len(running_rewards))
             if len(running_rewards) % 1000 == 0:
-                write_file('./logs/rewards_' + str(i_episode) + '.txt', running_rewards, True)
-                plot_rewards(running_rewards, './logs/' + str(i_episode) + '/')
+                write_file('./logs/CartPole/rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                plot_rewards(running_rewards, './logs/CartPole/' + str(i_episode) + '/')
             if running_reward > DISPLAY_REWARD_THRESHOLD:
                 RENDER = True  # rendering
             print("episode:", i_episode, "  reward:", int(running_reward))
