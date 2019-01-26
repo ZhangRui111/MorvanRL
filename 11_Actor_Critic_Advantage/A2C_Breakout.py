@@ -23,13 +23,13 @@ RENDER = False  # rendering wastes time
 CROP_SIZE = 80
 N_A = 4
 DISPLAY_REWARD_THRESHOLD = 100  # renders environment if total episode reward is greater then this threshold
-SAVED_INTERVAL = 2000
-y_axis_ticks = [-10, 0, 10]
+SAVED_INTERVAL = 1000
+y_axis_ticks = [-10, -5, 0]
 weights_path = './logs/Breakout/weights/'
 data_path = './logs/Breakout/data/'
 
 
-MAX_EPISODE = 50001
+MAX_EPISODE = 10001
 GAMMA = 0.9  # reward discount in TD error: 0.9
 LR_A = 0.0001  # learning rate for actor: 0.0001
 LR_C = 0.001  # learning rate for critic: 0.001
@@ -118,7 +118,10 @@ def main():
     env = gym.make('Breakout-v0')
     # env.seed(1)  # reproducible
     # env = env.unwrapped
-    sess = tf.Session()
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+    # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
+    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
     actor = Actor(sess, crop_size=CROP_SIZE, n_actions=N_A, lr=LR_A)
     critic = Critic(sess, crop_size=CROP_SIZE, lr=LR_C)
@@ -150,8 +153,10 @@ def main():
             print(probs)
             probs = np.around(probs, decimals=4)
             write_file(data_path + 'probs.txt', str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n', False)
-            if episode_steps % 20 == 0:  # episode_steps % 10 --> reserve the ball.
-                a = 1
+            # if episode_steps % 20 == 0:  # episode_steps % 10 --> reserve the ball.
+            #     a = 1
+
+            # a = np.random.random_integers(0, 3)
 
             s_, r, done, info = env.step(a)
             s_ = preprocess_image(s_)

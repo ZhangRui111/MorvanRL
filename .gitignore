@@ -7,3 +7,5 @@ __pycache__/
 data/
 .idea/
 events*
+
+11_Actor_Critic_Advantage/logs/*
