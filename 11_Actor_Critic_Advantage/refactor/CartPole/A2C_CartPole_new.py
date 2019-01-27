@@ -8,55 +8,45 @@ import numpy as np
 import tensorflow as tf
 
 from utils import write_file, plot_rewards
-from actor_critic import Actor, Critic
+from refactor.CartPole.brain import Actor, Critic
+from refactor.CartPole.hyper_parameters import Hyperparameters
 
 
 def main():
-    np.random.seed(5)
+    np.random.seed(2)
     tf.set_random_seed(2)  # reproducible
 
-    OUTPUT_GRAPH = False
-    MAX_EPISODE = 2001
-    DISPLAY_REWARD_THRESHOLD = 10000  # renders environment if total episode reward is greater then this threshold
-    MAX_EP_STEPS = 1000  # maximum time step in one episode
-    RENDER = True  # rendering wastes time
-    GAMMA = 0.9  # reward discount in TD error
-    LR_A = 0.01  # 0.01: learning rate for actor
-    LR_C = 0.1  # 0.1: learning rate for critic
-
     sess = tf.Session()
+    hp = Hyperparameters()
 
     env = gym.make('CartPole-v0')
     env.seed(1)  # reproducible
-    env = env.unwrapped
+    # env = env.unwrapped
 
-    N_F = env.observation_space.shape[0]
-    N_A = env.action_space.n
-
-    actor = Actor(sess, n_features=N_F, n_actions=N_A, lr=LR_A)
+    actor = Actor(sess, n_features=hp.N_F, n_actions=hp.N_A, lr=hp.LR_A)
     # we need a good teacher, so the teacher should learn faster than the actor
-    critic = Critic(sess, n_features=N_F, lr=LR_C)
+    critic = Critic(sess, n_features=hp.N_F, lr=hp.LR_C, discount=hp.GAMMA)
 
     sess.run(tf.global_variables_initializer())
 
-    if OUTPUT_GRAPH:
-        tf.summary.FileWriter("logs/Test/", sess.graph)
+    if hp.OUTPUT_GRAPH:
+        tf.summary.FileWriter("logs/", sess.graph)
 
     running_rewards = []
 
-    for i_episode in range(MAX_EPISODE):
+    for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
         t = 0
         track_r = []
         while True:
-            if RENDER:
+            if hp.RENDER:
                 env.render()
 
             a, probs = actor.choose_action(s)
             if i_episode == 0:
-                write_file('./logs/Test/probs.txt', probs, True)
+                write_file('./logs/probs.txt', probs, True)
             else:
-                write_file('./logs/Test/probs.txt', probs, False)
+                write_file('./logs/probs.txt', probs, False)
             # print('------------------------------------', probs)
 
             s_, r, done, info = env.step(a)
@@ -72,7 +62,7 @@ def main():
             s = s_
             t += 1
 
-            if done or t >= MAX_EP_STEPS:
+            if done or t >= hp.MAX_EP_STEPS:
                 ep_rs_sum = sum(track_r)
 
                 if 'running_reward' not in globals() and 'running_reward' not in locals():
@@ -86,10 +76,10 @@ def main():
                     write_file('./logs/Test/rewards_' + str(i_episode) + '.txt', running_rewards, True)
                     y_axis_ticks = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
                     plot_rewards(running_rewards, y_axis_ticks, './logs/Test/' + str(i_episode) + '/')
-                if running_reward > DISPLAY_REWARD_THRESHOLD:
-                    RENDER = True  # rendering
+                if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
+                    hp.RENDER = True  # rendering
                 # print("episode:", i_episode, "  reward:", int(running_reward))
-                print("ep: %d, running_reward: %f, ep_rs_sum: %f" % (i_episode, running_reward, ep_rs_sum))
+                print("ep: {0}, running_reward: {1:.4f}, ep_rs_sum: {2}".format(i_episode, running_reward, ep_rs_sum))
                 break
 
 

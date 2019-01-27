@@ -1,3 +1,4 @@
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -19,6 +20,19 @@ class time_ticker(object):
         if save_path is not None:
             write_file(save_path, '{0}: {1}\n'.format(token, interval_time), False)
         return interval_time
+
+
+def preprocess_image(img, crop_size):
+    img = img[30:-15, 5:-5:, :]  # image cropping
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # convert from BGR to GRAY
+    gray = cv2.resize(gray, (crop_size, crop_size), interpolation=cv2.INTER_NEAREST)
+    return gray
+
+
+def show_gray_image(img):
+    plt.imshow(img, cmap="gray")
+    plt.show()
+    plt.close()
 
 
 def exist_or_create_folder(path_name):

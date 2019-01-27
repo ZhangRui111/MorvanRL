@@ -9,3 +9,5 @@ data/
 events*
 
 11_Actor_Critic_Advantage/logs/*
+11_Actor_Critic_Advantage/refactor/*/logs/*
+
