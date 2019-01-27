@@ -71,7 +71,10 @@ def build_actor_ram_network(n_features, n_actions, lr):
     with tf.variable_scope('train'):
         train_op = tf.train.AdamOptimizer(lr).minimize(-exp_v)  # minimize(-exp_v) = maximize(exp_v)
 
-    return [[s, a, td_error], [acts_prob, exp_v, train_op], [log_prob]]
+    return [[s, a, td_error], [acts_prob, exp_v, train_op]]
+    # # debug mode # #
+    # return [[s, a, td_error], [acts_prob, exp_v, train_op], [log_prob, l1]]
+    # # debug mode # #
 
 
 def build_critic_ram_network(n_features, lr, discount):

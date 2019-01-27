@@ -11,7 +11,10 @@ class Actor(object):
             net = build_actor_network(n_features, n_actions, lr)
         else:
             net = build_actor_ram_network(n_features, n_actions, lr)
-            self.log_prob = net[2][0]
+            # # debug mode # #
+            # self.log_prob = net[2][0]
+            # self.l1 = net[2][1]
+            # # debug mode # #
         self.s = net[0][0]
         self.a = net[0][1]
         self.td_error = net[0][2]
@@ -22,15 +25,20 @@ class Actor(object):
     def learn(self, s, a, td):
         s = s[np.newaxis, :]
         feed_dict = {self.s: s, self.a: a, self.td_error: td}
-        _, exp_v, act_prob, log_prob = self.sess.run([self.train_op, self.exp_v, self.acts_prob, self.log_prob], feed_dict)
-        return exp_v, act_prob, log_prob
+        _, exp_v = self.sess.run([self.train_op, self.exp_v], feed_dict)
+        return exp_v
+        # # debug mode # #
+        # _, exp_v, act_prob, log_prob, l1 = self.sess.run([self.train_op, self.exp_v, self.acts_prob,
+        #                                                   self.log_prob, self.l1], feed_dict)
+        # return exp_v, act_prob, log_prob, l1
+        # # debug mode # #
 
     def choose_action(self, s):
         s = s[np.newaxis, :]
         probs = self.sess.run(self.acts_prob, {self.s: s})  # get probabilities for all actions
-        assert np.nan not in probs
+        assert np.isnan(np.min(probs.ravel())) == False
         action = np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())
-        return action, probs.flatten()
+        return action, probs.ravel()
 
 
 class Critic(object):

@@ -11,5 +11,5 @@ class Hyperparameters(object):
         self.SAVED_INTERVAL = 500
         self.RENDER = False  # rendering wastes time
         self.GAMMA = 0.9  # reward discount in TD error
-        self.LR_A = 0.0001  # 0.01: learning rate for actor
-        self.LR_C = 0.001  # 0.1: learning rate for critic
+        self.LR_A = 0.00001  # 0.01: learning rate for actor
+        self.LR_C = 0.0001  # 0.1: learning rate for critic

@@ -67,6 +67,8 @@ def main():
         if env_name != 'Breakout-ram-v0':
             s = preprocess_image(s, hp.N_F)
             # show_gray_image(s)
+        # assert to check: whether there is nan in s.
+        assert np.isnan(np.min(s.ravel())) == False
 
         episode_steps = 0
         track_r = []
@@ -90,12 +92,17 @@ def main():
                 s_ = preprocess_image(s_, hp.N_F)
                 # show_gray_image(s)
 
+            assert np.isnan(np.min(s_.ravel())) == False
+
             if done:
                 r = -2
             track_r.append(r)
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-            exp_v, act_prob, log_prob = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            # # debug mode # #
+            # exp_v, act_prob, log_prob, l1 = actor.learn(s, a, td_error)
+            # # debug mode # #
             content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
             write_file(td_exp_path, content, False)
 
@@ -124,8 +131,10 @@ def main():
                     exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
-                print('action:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
-                      log_prob)
+                # # debug mode # #
+                # print('\naction:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
+                #       log_prob, 'l1:', l1)
+                # # debug mode # #
                 print("episode: {0}, running reward: {1:.4f}, episode reward: {2}, td error: {3}, exp_v: {4}".
                       format(i_episode, running_reward, ep_rs_sum, td_error, exp_v))
                 break
