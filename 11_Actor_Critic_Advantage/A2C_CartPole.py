@@ -129,7 +129,7 @@ critic = Critic(sess, n_features=N_F, lr=LR_C)
 sess.run(tf.global_variables_initializer())
 
 if OUTPUT_GRAPH:
-    tf.summary.FileWriter("logs/", sess.graph)
+    tf.summary.FileWriter("logs/CartPole/", sess.graph)
 
 running_rewards = []
 
