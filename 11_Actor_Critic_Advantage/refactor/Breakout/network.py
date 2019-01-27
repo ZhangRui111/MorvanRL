@@ -64,7 +64,7 @@ def build_actor_ram_network(n_features, n_actions, lr):
         acts_prob = tf.contrib.layers.fully_connected(l1, n_actions, activation_fn=tf.nn.softmax)
 
     with tf.variable_scope('exp_v'):
-        log_prob = tf.log(acts_prob[0, a])
+        log_prob = tf.log(tf.clip_by_value(acts_prob, 1e-2, 1)[0, a])
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):

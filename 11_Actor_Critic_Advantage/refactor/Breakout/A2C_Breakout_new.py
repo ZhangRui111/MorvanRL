@@ -20,7 +20,7 @@ def main():
     np.random.seed(2)
     tf.set_random_seed(2)  # reproducible
 
-    y_axis_ticks = [-10, -5, 0]
+    y_axis_ticks = [-2, -1, 0, 1, 2]
     weights_path = './logs/weights/'
     data_path = './logs/data/'
     hp = Hyperparameters()
@@ -30,8 +30,8 @@ def main():
     # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-    # env_name = 'Breakout-ram-v0'
-    env_name = 'Breakout-v0'
+    env_name = 'Breakout-ram-v0'
+    # env_name = 'Breakout-v0'
     # env_name = 'BreakoutNoFrameskip-v4'
     env = gym.make(env_name)
     env.seed(1)  # reproducible
@@ -57,8 +57,10 @@ def main():
     total_steps = 0
 
     saver, load_episode = restore_parameters(sess, weights_path)
-    write_file(data_path + 'probs.txt', 'probs\n', True)
-    write_file(data_path + 'exp_v.txt', 'exp_v\n', True)
+    probs_path = data_path + 'probs_' + str(0) + '.txt'
+    exp_v_path = data_path + 'exp_v_' + str(0) + '.txt'
+    write_file(probs_path, 'probs\n', True)
+    write_file(exp_v_path, 'exp_v\n', True)
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
@@ -75,7 +77,7 @@ def main():
             a, probs = actor.choose_action(s)
             probs = np.around(probs, decimals=4)
             content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
-            write_file(data_path + 'probs.txt', content, False)
+            write_file(probs_path, content, False)
             # print('------------------------------------', probs)
 
             if episode_steps % 50 == 0:  # episode_steps % 10 --> reserve the ball.
@@ -96,14 +98,14 @@ def main():
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
             exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
             content = str([i_episode, total_steps]) + '  ' + str(exp_v) + '\n'
-            write_file(data_path + 'exp_v.txt', content, False)
+            write_file(exp_v_path, content, False)
 
             s = s_
             episode_steps += 1
             total_steps += 1
 
             if done:
-                print(episode_steps)
+                # print(episode_steps)
                 ep_rs_sum = sum(track_r)
 
                 if 'running_reward' not in globals() and 'running_reward' not in locals():
@@ -119,6 +121,8 @@ def main():
                 if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
                     save_parameters(sess, weights_path, saver,
                                     weights_path + '-' + str(load_episode + i_episode))
+                    probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
+                    exp_v_path = data_path + 'exp_v_' + str(i_episode) + '.txt'
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
                 print("ep: {0}, running_reward: {1:.4f}, ep_rs_sum: {2}".format(i_episode, running_reward, ep_rs_sum))
