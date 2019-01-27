@@ -58,10 +58,12 @@ class Actor(object):
 
         with tf.variable_scope('exp_v'):
             log_prob = tf.log(self.acts_prob[0, self.a])
+            # log_prob = tf.log(tf.clip_by_value(self.acts_prob, 1e-2, 1)[0, self.a])
             self.exp_v = tf.reduce_mean(log_prob * self.td_error)  # advantage (TD_error) guided loss
 
         with tf.variable_scope('train'):
             self.train_op = tf.train.AdamOptimizer(lr).minimize(-self.exp_v)  # minimize(-exp_v) = maximize(exp_v)
+            # self.train_op = tf.train.GradientDescentOptimizer(lr).minimize(-self.exp_v)
 
     def learn(self, s, a, td):
         s = s[np.newaxis, :]
@@ -151,7 +153,7 @@ for i_episode in range(MAX_EPISODE):
         track_r.append(r)
 
         td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-        actor.learn(s, a, td_error)     # true_gradient = grad[logPi(s,a) * td_error]
+        exp_v = actor.learn(s, a, td_error)     # true_gradient = grad[logPi(s,a) * td_error]
 
         s = s_
         t += 1
@@ -172,5 +174,6 @@ for i_episode in range(MAX_EPISODE):
                 plot_rewards(running_rewards, y_axis_ticks, './logs/CartPole/' + str(i_episode) + '/')
             if running_reward > DISPLAY_REWARD_THRESHOLD:
                 RENDER = True  # rendering
-            print("episode:", i_episode, "  reward:", int(running_reward))
+            print('episode:', i_episode, ' running reward:', int(running_reward),
+                  ' episode reward:', ep_rs_sum, ' tf_error:', td_error, ' exp_v:', exp_v)
             break
