@@ -4,7 +4,6 @@ The cart pole example. Policy is oscillated.
 """
 
 import gym
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import tensorflow as tf
@@ -31,13 +30,21 @@ def main():
     # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-    env = gym.make('Breakout-v0')
+    # env_name = 'Breakout-ram-v0'
+    env_name = 'Breakout-v0'
+    # env_name = 'BreakoutNoFrameskip-v4'
+    env = gym.make(env_name)
     env.seed(1)  # reproducible
     env = env.unwrapped
 
-    actor = Actor(sess, n_features=hp.N_F, n_actions=hp.N_A, lr=hp.LR_A)
-    # we need a good teacher, so the teacher should learn faster than the actor
-    critic = Critic(sess, n_features=hp.N_F, lr=hp.LR_C, discount=hp.GAMMA)
+    if env_name == 'Breakout-ram-v0':
+        actor = Actor(sess, n_features=128, n_actions=hp.N_A, lr=hp.LR_A, ram=True)
+        # we need a good teacher, so the teacher should learn faster than the actor
+        critic = Critic(sess, n_features=128, lr=hp.LR_C, discount=hp.GAMMA, ram=True)
+    else:
+        actor = Actor(sess, n_features=hp.N_F, n_actions=hp.N_A, lr=hp.LR_A)
+        # we need a good teacher, so the teacher should learn faster than the actor
+        critic = Critic(sess, n_features=hp.N_F, lr=hp.LR_C, discount=hp.GAMMA)
 
     sess.run(tf.global_variables_initializer())
 
@@ -51,10 +58,12 @@ def main():
 
     saver, load_episode = restore_parameters(sess, weights_path)
     write_file(data_path + 'probs.txt', 'probs\n', True)
+    write_file(data_path + 'exp_v.txt', 'exp_v\n', True)
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
-        s = preprocess_image(s, hp.N_F)
+        if env_name != 'Breakout-ram-v0':
+            s = preprocess_image(s, hp.N_F)
         # show_gray_image(s)
 
         episode_steps = 0
@@ -66,36 +75,34 @@ def main():
             a, probs = actor.choose_action(s)
             probs = np.around(probs, decimals=4)
             content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
-            if i_episode == 0:
-                write_file(data_path + 'probs.txt', content, True)
-            else:
-                write_file(data_path + 'probs.txt', content, False)
+            write_file(data_path + 'probs.txt', content, False)
             # print('------------------------------------', probs)
 
-            # if episode_steps % 20 == 0:  # episode_steps % 10 --> reserve the ball.
-            #     a = 1
+            if episode_steps % 50 == 0:  # episode_steps % 10 --> reserve the ball.
+                a = 1
 
             # a = np.random.random_integers(0, 3)
 
             s_, r, done, info = env.step(a)
-            s_ = preprocess_image(s_, hp.N_F)
+            if env_name != 'Breakout-ram-v0':
+                s_ = preprocess_image(s_, hp.N_F)
 
             # show_gray_image(s)
 
             if done:
                 r = -2
-            if episode_steps >= hp.MAX_EP_STEPS:
-                r = 1
             track_r.append(r)
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-            actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            content = str([i_episode, total_steps]) + '  ' + str(exp_v) + '\n'
+            write_file(data_path + 'exp_v.txt', content, False)
 
             s = s_
             episode_steps += 1
             total_steps += 1
 
-            if done or episode_steps >= hp.MAX_EP_STEPS:
+            if done:
                 print(episode_steps)
                 ep_rs_sum = sum(track_r)
 

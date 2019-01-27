@@ -1,12 +1,16 @@
 import numpy as np
 
-from refactor.Breakout.network import build_actor_network, build_critic_network
+from refactor.Breakout.network import build_actor_network, build_critic_network, \
+    build_actor_ram_network, build_critic_ram_network
 
 
 class Actor(object):
-    def __init__(self, sess, n_features, n_actions, lr):
+    def __init__(self, sess, n_features, n_actions, lr, ram=False):
         self.sess = sess
-        net = build_actor_network(n_features, n_actions, lr)
+        if ram is False:
+            net = build_actor_network(n_features, n_actions, lr)
+        else:
+            net = build_actor_ram_network(n_features, n_actions, lr)
         self.s = net[0][0]
         self.a = net[0][1]
         self.td_error = net[0][2]
@@ -28,9 +32,12 @@ class Actor(object):
 
 
 class Critic(object):
-    def __init__(self, sess, n_features, lr, discount):
+    def __init__(self, sess, n_features, lr, discount, ram=False):
         self.sess = sess
-        net = build_critic_network(n_features, lr, discount)
+        if ram is False:
+            net = build_critic_network(n_features, lr, discount)
+        else:
+            net = build_critic_ram_network(n_features, lr, discount)
         self.s = net[0][0]
         self.v_ = net[0][1]
         self.r = net[0][2]

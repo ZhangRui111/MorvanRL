@@ -1,6 +1,7 @@
 import cv2
+import matplotlib as mlp
+mlp.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 import time
 import tensorflow as tf
