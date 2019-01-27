@@ -59,18 +59,19 @@ def build_actor_ram_network(n_features, n_actions, lr):
     td_error = tf.placeholder(tf.float32, None, "td_error")  # TD_error
 
     with tf.variable_scope('Actor'):
-        input = s / 255
-        l1 = tf.contrib.layers.fully_connected(input, 20, activation_fn=tf.nn.relu)
+        input_crop = s / 255
+        l1 = tf.contrib.layers.fully_connected(input_crop, 128, activation_fn=tf.nn.relu)
         acts_prob = tf.contrib.layers.fully_connected(l1, n_actions, activation_fn=tf.nn.softmax)
 
     with tf.variable_scope('exp_v'):
-        log_prob = tf.log(tf.clip_by_value(acts_prob, 1e-2, 1)[0, a])
+        # log_prob = tf.log(tf.clip_by_value(acts_prob, 1e-2, 1)[0, a])
+        log_prob = tf.log(acts_prob[0, a])
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):
         train_op = tf.train.AdamOptimizer(lr).minimize(-exp_v)  # minimize(-exp_v) = maximize(exp_v)
 
-    return [[s, a, td_error], [acts_prob, exp_v, train_op]]
+    return [[s, a, td_error], [acts_prob, exp_v, train_op], [log_prob]]
 
 
 def build_critic_ram_network(n_features, lr, discount):
@@ -79,8 +80,8 @@ def build_critic_ram_network(n_features, lr, discount):
     r = tf.placeholder(tf.float32, None, 'r')
 
     with tf.variable_scope('Critic'):
-        input = s / 255
-        l1 = tf.contrib.layers.fully_connected(input, 20, activation_fn=tf.nn.relu)
+        input_crop = s / 255
+        l1 = tf.contrib.layers.fully_connected(input_crop, 20, activation_fn=tf.nn.relu)
         v = tf.contrib.layers.fully_connected(l1, 1, activation_fn=None)
 
     with tf.variable_scope('squared_TD_error'):

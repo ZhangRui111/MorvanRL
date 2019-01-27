@@ -58,15 +58,15 @@ def main():
 
     saver, load_episode = restore_parameters(sess, weights_path)
     probs_path = data_path + 'probs_' + str(0) + '.txt'
-    exp_v_path = data_path + 'exp_v_' + str(0) + '.txt'
+    td_exp_path = data_path + 'td_exp_' + str(0) + '.txt'
     write_file(probs_path, 'probs\n', True)
-    write_file(exp_v_path, 'exp_v\n', True)
+    write_file(td_exp_path, 'td_exp\n', True)
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
         if env_name != 'Breakout-ram-v0':
             s = preprocess_image(s, hp.N_F)
-        # show_gray_image(s)
+            # show_gray_image(s)
 
         episode_steps = 0
         track_r = []
@@ -88,17 +88,16 @@ def main():
             s_, r, done, info = env.step(a)
             if env_name != 'Breakout-ram-v0':
                 s_ = preprocess_image(s_, hp.N_F)
-
-            # show_gray_image(s)
+                # show_gray_image(s)
 
             if done:
                 r = -2
             track_r.append(r)
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-            exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
-            content = str([i_episode, total_steps]) + '  ' + str(exp_v) + '\n'
-            write_file(exp_v_path, content, False)
+            exp_v, act_prob, log_prob = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
+            write_file(td_exp_path, content, False)
 
             s = s_
             episode_steps += 1
@@ -122,10 +121,13 @@ def main():
                     save_parameters(sess, weights_path, saver,
                                     weights_path + '-' + str(load_episode + i_episode))
                     probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
-                    exp_v_path = data_path + 'exp_v_' + str(i_episode) + '.txt'
+                    exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
-                print("ep: {0}, running_reward: {1:.4f}, ep_rs_sum: {2}".format(i_episode, running_reward, ep_rs_sum))
+                print('action:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
+                      log_prob)
+                print("episode: {0}, running reward: {1:.4f}, episode reward: {2}, td error: {3}, exp_v: {4}".
+                      format(i_episode, running_reward, ep_rs_sum, td_error, exp_v))
                 break
 
 

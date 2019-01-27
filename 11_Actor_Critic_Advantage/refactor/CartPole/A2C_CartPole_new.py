@@ -57,7 +57,7 @@ def main():
             track_r.append(r)
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-            actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
 
             s = s_
             t += 1
@@ -79,7 +79,8 @@ def main():
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
                 # print("episode:", i_episode, "  reward:", int(running_reward))
-                print("ep: {0}, running_reward: {1:.4f}, ep_rs_sum: {2}".format(i_episode, running_reward, ep_rs_sum))
+                print('episode:', i_episode, ' running reward:', int(running_reward),
+                      ' episode reward:', ep_rs_sum, ' tf_error:', td_error, ' exp_v:', exp_v)
                 break
 
 

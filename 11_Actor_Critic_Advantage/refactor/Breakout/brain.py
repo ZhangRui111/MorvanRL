@@ -11,6 +11,7 @@ class Actor(object):
             net = build_actor_network(n_features, n_actions, lr)
         else:
             net = build_actor_ram_network(n_features, n_actions, lr)
+            self.log_prob = net[2][0]
         self.s = net[0][0]
         self.a = net[0][1]
         self.td_error = net[0][2]
@@ -21,8 +22,8 @@ class Actor(object):
     def learn(self, s, a, td):
         s = s[np.newaxis, :]
         feed_dict = {self.s: s, self.a: a, self.td_error: td}
-        _, exp_v = self.sess.run([self.train_op, self.exp_v], feed_dict)
-        return exp_v
+        _, exp_v, act_prob, log_prob = self.sess.run([self.train_op, self.exp_v, self.acts_prob, self.log_prob], feed_dict)
+        return exp_v, act_prob, log_prob
 
     def choose_action(self, s):
         s = s[np.newaxis, :]
