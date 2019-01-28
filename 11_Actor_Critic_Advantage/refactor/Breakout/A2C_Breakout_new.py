@@ -2,13 +2,12 @@
 Actor-Critic using TD-error as the Advantage, Reinforcement Learning.
 The cart pole example. Policy is oscillated.
 """
-import ipdb
 import gym
 import numpy as np
 import os
 import tensorflow as tf
 
-from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters, show_gray_image
+from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters
 from refactor.Breakout.brain import Actor, Critic
 from refactor.Breakout.hyper_parameters import Hyperparameters
 

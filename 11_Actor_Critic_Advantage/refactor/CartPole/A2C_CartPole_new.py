@@ -80,9 +80,9 @@ def main():
                 running_rewards.append(running_reward)
                 # print(len(running_rewards))
                 if len(running_rewards) % 1000 == 0:
-                    write_file('./logs/Test/rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                    write_file('./logs/rewards_' + str(i_episode) + '.txt', running_rewards, True)
                     y_axis_ticks = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-                    plot_rewards(running_rewards, y_axis_ticks, './logs/Test/' + str(i_episode) + '/')
+                    plot_rewards(running_rewards, y_axis_ticks, './logs/' + str(i_episode) + '/')
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
                 # # debug mode # #

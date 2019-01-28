@@ -8,6 +8,9 @@ data/
 .idea/
 events*
 
-11_Actor_Critic_Advantage/logs/*
+11_Actor_Critic_Advantage/original/logs/*
 11_Actor_Critic_Advantage/refactor/*/logs/*
+11_Actor_Critic_Advantage/test.py
 
+11_Actor_Critic_Advantage/test.py
+11_Actor_Critic_Advantage/test.py

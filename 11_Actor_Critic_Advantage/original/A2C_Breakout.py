@@ -8,7 +8,6 @@ import gym
 import numpy as np
 import os
 import tensorflow as tf
-import time
 
 from utils import write_file, plot_rewards, restore_parameters, save_parameters
 
