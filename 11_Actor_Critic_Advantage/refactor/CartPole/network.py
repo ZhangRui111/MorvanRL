@@ -13,6 +13,7 @@ def build_actor_network(n_features, n_actions, lr):
 
     with tf.variable_scope('exp_v'):
         log_prob = tf.log(acts_prob[0, a])
+        # log_prob = tf.exp(acts_prob[0, a])  # tf.exp can also convergent
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):

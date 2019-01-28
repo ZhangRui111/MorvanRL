@@ -30,7 +30,7 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     if hp.OUTPUT_GRAPH:
-        tf.summary.FileWriter("logs/", sess.graph)
+        tf.summary.FileWriter("./logs/", sess.graph)
 
     running_rewards = []
 

@@ -65,13 +65,13 @@ def build_actor_ram_network(n_features, n_actions, lr):
 
     with tf.variable_scope('exp_v'):
         # log_prob = tf.log(tf.clip_by_value(acts_prob, 1e-2, 1)[0, a])
-        log_prob = tf.log(acts_prob[0, a])
+        # log_prob = tf.log(acts_prob[0, a])
+        log_prob = tf.exp(acts_prob[0, a])
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):
-        # edited by tianling
         # train_op = tf.train.AdamOptimizer(lr).minimize(-exp_v)  # minimize(-exp_v) = maximize(exp_v)
-        train_op = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(-exp_v)
+        train_op = tf.train.GradientDescentOptimizer(lr).minimize(-exp_v)
 
     return [[s, a, td_error], [acts_prob, exp_v, train_op]]
     # # debug mode # #
@@ -93,6 +93,7 @@ def build_critic_ram_network(n_features, lr, discount):
         td_error = r + discount * v_ - v
         loss = tf.square(td_error)  # TD_error = (r+gamma*V_next) - V_eval
     with tf.variable_scope('train'):
-        train_op = tf.train.AdamOptimizer(lr).minimize(loss)
+        # train_op = tf.train.AdamOptimizer(lr).minimize(loss)
+        train_op = tf.train.GradientDescentOptimizer(lr).minimize(loss)
 
     return [[s, v_, r], [v, td_error, loss, train_op]]
