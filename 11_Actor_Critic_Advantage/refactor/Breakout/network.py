@@ -60,7 +60,7 @@ def build_actor_ram_network(n_features, n_actions, lr):
 
     with tf.variable_scope('Actor'):
         input_crop = s / 255
-        l1 = tf.contrib.layers.fully_connected(input_crop, 128, activation_fn=tf.nn.relu)
+        l1 = tf.contrib.layers.fully_connected(input_crop, 20, activation_fn=tf.nn.relu)
         acts_prob = tf.contrib.layers.fully_connected(l1, n_actions, activation_fn=tf.nn.softmax)
 
     with tf.variable_scope('exp_v'):
@@ -69,7 +69,9 @@ def build_actor_ram_network(n_features, n_actions, lr):
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):
-        train_op = tf.train.AdamOptimizer(lr).minimize(-exp_v)  # minimize(-exp_v) = maximize(exp_v)
+        # edited by tianling
+        # train_op = tf.train.AdamOptimizer(lr).minimize(-exp_v)  # minimize(-exp_v) = maximize(exp_v)
+        train_op = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(-exp_v)
 
     return [[s, a, td_error], [acts_prob, exp_v, train_op]]
     # # debug mode # #

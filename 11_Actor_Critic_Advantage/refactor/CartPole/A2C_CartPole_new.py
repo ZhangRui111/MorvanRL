@@ -21,7 +21,7 @@ def main():
 
     env = gym.make('CartPole-v0')
     env.seed(1)  # reproducible
-    # env = env.unwrapped
+    env = env.unwrapped
 
     actor = Actor(sess, n_features=hp.N_F, n_actions=hp.N_A, lr=hp.LR_A)
     # we need a good teacher, so the teacher should learn faster than the actor
@@ -36,6 +36,8 @@ def main():
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
+        # assert to check: whether there is nan in s.
+        assert np.isnan(np.min(s.ravel())) == False
         t = 0
         track_r = []
         while True:
@@ -51,6 +53,8 @@ def main():
 
             s_, r, done, info = env.step(a)
 
+            assert np.isnan(np.min(s_.ravel())) == False
+
             if done:
                 r = -20
 
@@ -58,6 +62,9 @@ def main():
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
             exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
+            # # debug mode # #
+            # exp_v, act_prob, log_prob, l1 = actor.learn(s, a, td_error)
+            # # debug mode # #
 
             s = s_
             t += 1
@@ -78,7 +85,10 @@ def main():
                     plot_rewards(running_rewards, y_axis_ticks, './logs/Test/' + str(i_episode) + '/')
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                     hp.RENDER = True  # rendering
-                # print("episode:", i_episode, "  reward:", int(running_reward))
+                # # debug mode # #
+                # print('\naction:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
+                #       log_prob, 'l1:', l1)
+                # # debug mode # #
                 print('episode:', i_episode, ' running reward:', int(running_reward),
                       ' episode reward:', ep_rs_sum, ' tf_error:', td_error, ' exp_v:', exp_v)
                 break

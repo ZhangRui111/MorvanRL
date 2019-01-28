@@ -2,7 +2,7 @@
 Actor-Critic using TD-error as the Advantage, Reinforcement Learning.
 The cart pole example. Policy is oscillated.
 """
-
+import ipdb
 import gym
 import numpy as np
 import os
@@ -17,8 +17,8 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 def main():
-    np.random.seed(2)
-    tf.set_random_seed(2)  # reproducible
+    # np.random.seed(2)
+    # tf.set_random_seed(2)  # reproducible
 
     y_axis_ticks = [-2, -1, 0, 1, 2]
     weights_path = './logs/weights/'
@@ -124,9 +124,10 @@ def main():
                 if len(running_rewards) % hp.SAVED_INTERVAL == 0:
                     write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
                     plot_rewards(running_rewards, y_axis_ticks, data_path)
-                if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
+                if i_episode % hp.SAVED_INTERVAL_NET == 0 and i_episode != 0:
                     save_parameters(sess, weights_path, saver,
                                     weights_path + '-' + str(load_episode + i_episode))
+                if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
                     probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
                     exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
                 if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
