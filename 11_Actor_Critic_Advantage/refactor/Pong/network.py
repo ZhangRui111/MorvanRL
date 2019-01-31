@@ -11,8 +11,8 @@ def build_actor_network(n_features, n_actions, lr):
         input_crop = s / 255
         input = tf.transpose(input_crop, [1, 2, 0])
         conv1 = tf.contrib.layers.conv2d(inputs=input[np.newaxis, :], num_outputs=32, kernel_size=8, stride=4)
-        conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=64, kernel_size=4, stride=2)
-        conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=64, kernel_size=3, stride=1)
+        conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=32, kernel_size=4, stride=2)
+        conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=32, kernel_size=3, stride=1)
 
         flat = tf.contrib.layers.flatten(conv3)
         f = tf.contrib.layers.fully_connected(flat, 512)
@@ -37,8 +37,8 @@ def build_critic_network(n_features, lr, discount):
         input_crop = s / 255
         input = tf.transpose(input_crop, [1, 2, 0])
         conv1 = tf.contrib.layers.conv2d(inputs=input[np.newaxis, :], num_outputs=32, kernel_size=8, stride=4)
-        conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=64, kernel_size=4, stride=2)
-        conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=64, kernel_size=3, stride=1)
+        conv2 = tf.contrib.layers.conv2d(inputs=conv1, num_outputs=32, kernel_size=4, stride=2)
+        conv3 = tf.contrib.layers.conv2d(inputs=conv2, num_outputs=32, kernel_size=3, stride=1)
 
         flat = tf.contrib.layers.flatten(conv3)
         f = tf.contrib.layers.fully_connected(flat, 512)
@@ -65,8 +65,9 @@ def build_actor_ram_network(n_features, n_actions, lr):
 
     with tf.variable_scope('exp_v'):
         # log_prob = tf.log(tf.clip_by_value(acts_prob, 1e-2, 1)[0, a])
-        # log_prob = tf.log(acts_prob[0, a])
-        log_prob = tf.exp(acts_prob[0, a])
+        log_prob = tf.log(acts_prob[0, a])
+        # log_prob = tf.exp(acts_prob[0, a])
+        # log_prob = (-2) * tf.square(acts_prob[0, a]) + 4 * (acts_prob[0, a]) + 1
         exp_v = tf.reduce_mean(log_prob * td_error)  # advantage (TD_error) guided loss
 
     with tf.variable_scope('train'):

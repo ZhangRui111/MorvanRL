@@ -1,6 +1,6 @@
 """
 Actor-Critic using TD-error as the Advantage, Reinforcement Learning.
-The Breakout example. Policy is oscillated.
+The Pong example. Policy is oscillated.
 """
 import gym
 import numpy as np
@@ -8,8 +8,8 @@ import os
 import tensorflow as tf
 
 from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters
-from refactor.Breakout.brain import Actor, Critic
-from refactor.Breakout.hyper_parameters import Hyperparameters
+from refactor.Pong.brain import Actor, Critic
+from refactor.Pong.hyper_parameters import Hyperparameters
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
@@ -19,7 +19,7 @@ def main():
     # np.random.seed(2)
     # tf.set_random_seed(2)  # reproducible
 
-    y_axis_ticks = [-2, -1, 0, 1, 2]
+    y_axis_ticks = [-25, -15, 5, 15, 25]
     weights_path = './logs/weights/'
     data_path = './logs/data/'
     hp = Hyperparameters()
@@ -29,14 +29,14 @@ def main():
     # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-    env_name = 'Breakout-ram-v0'
-    # env_name = 'Breakout-v0'
-    # env_name = 'BreakoutNoFrameskip-v4'
+    env_name = 'Pong-ram-v0'
+    # env_name = 'Pong-v0'
+    # env_name = 'PongNoFrameskip-v4'
     env = gym.make(env_name)
     env.seed(1)  # reproducible
     env = env.unwrapped
 
-    if env_name == 'Breakout-ram-v0':
+    if env_name == 'Pong-ram-v0':
         actor = Actor(sess, n_features=128, n_actions=hp.N_A, lr=hp.LR_A, ram=True)
         # we need a good teacher, so the teacher should learn faster than the actor
         critic = Critic(sess, n_features=128, lr=hp.LR_C, discount=hp.GAMMA, ram=True)
@@ -63,7 +63,7 @@ def main():
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
-        if env_name != 'Breakout-ram-v0':
+        if env_name != 'Pong-ram-v0':
             s = preprocess_image(s, hp.N_F)
             # show_gray_image(s)
         # assert to check: whether there is nan in s.
@@ -87,7 +87,7 @@ def main():
             # a = np.random.random_integers(0, 3)
 
             s_, r, done, info = env.step(a)
-            if env_name != 'Breakout-ram-v0':
+            if env_name != 'Pong-ram-v0':
                 s_ = preprocess_image(s_, hp.N_F)
                 # show_gray_image(s)
 
@@ -112,6 +112,7 @@ def main():
             if done:
                 # print(episode_steps)
                 ep_rs_sum = sum(track_r)
+                aa = track_r.count(1)
 
                 if 'running_reward' not in globals() and 'running_reward' not in locals():
                     running_reward = ep_rs_sum
@@ -129,8 +130,12 @@ def main():
                 if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
                     probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
                     exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
-                if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
-                    hp.RENDER = True  # rendering
+                # if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
+                #     hp.RENDER = True  # rendering
+                if 0 <= running_reward % 2000 < 50:
+                    hp.RENDER = True  # periodical rendering
+                if running_reward % 2000 == 50:
+                    hp.RENDER = False  # periodical rendering
                 # # debug mode # #
                 # print('\naction:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
                 #       log_prob, 'l1:', l1)
