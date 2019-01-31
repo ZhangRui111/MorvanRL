@@ -132,10 +132,10 @@ def main():
                     exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
                 # if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
                 #     hp.RENDER = True  # rendering
-                if 0 <= running_reward % 2000 < 50:
-                    hp.RENDER = True  # periodical rendering
-                if running_reward % 2000 == 50:
-                    hp.RENDER = False  # periodical rendering
+                # if 0 <= i_episode % 2000 < 50:
+                #     hp.RENDER = True  # periodical rendering
+                # if i_episode % 2000 == 50:
+                #     hp.RENDER = False  # periodical rendering
                 # # debug mode # #
                 # print('\naction:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
                 #       log_prob, 'l1:', l1)
