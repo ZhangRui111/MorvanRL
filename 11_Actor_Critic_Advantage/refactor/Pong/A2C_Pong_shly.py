@@ -57,9 +57,7 @@ def main():
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
-        if env_name != 'Pong-ram-v0':
-            s = preprocess_image(s, hp.N_F)
-            # show_gray_image(s)
+        s = preprocess_image(s, hp.N_F)
         # assert to check: whether there is nan in s.
         assert np.isnan(np.min(s.ravel())) == False
 
@@ -69,7 +67,7 @@ def main():
             # if hp.RENDER:
             #     env.render()
 
-            env.render()
+            # env.render()
 
             a, probs = actor.choose_action(s)
             probs = np.around(probs, decimals=4)
@@ -77,16 +75,9 @@ def main():
             # write_file(probs_path, content, False)
             # print('------------------------------------', probs)
 
-            if episode_steps % 50 == 0:  # episode_steps % 10 --> reserve the ball.
-                a = 1
-
-            # a = np.random.random_integers(0, 3)
-
             s_, r, done, info = env.step(a)
-            if env_name != 'Pong-ram-v0':
-                s_ = preprocess_image(s_, hp.N_F)
-                # show_gray_image(s)
-
+            s_ = preprocess_image(s_, hp.N_F)
+            # assert to check: whether there is nan in s_.
             assert np.isnan(np.min(s_.ravel())) == False
 
             if done:
@@ -95,11 +86,6 @@ def main():
 
             td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
             exp_v = actor.learn(s, a, td_error)  # true_gradient = grad[logPi(s,a) * td_error]
-            # # debug mode # #
-            # exp_v, act_prob, log_prob, l1 = actor.learn(s, a, td_error)
-            # # debug mode # #
-            # content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
-            # write_file(td_exp_path, content, False)
 
             s = s_
             episode_steps += 1
@@ -123,9 +109,6 @@ def main():
                 if i_episode % hp.SAVED_INTERVAL_NET == 0 and i_episode != 0:
                     save_parameters(sess, weights_path, saver,
                                     weights_path + '-' + str(load_episode + i_episode))
-                if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
-                    probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
-                    exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
                 print("episode: {0}, running reward: {1:.4f}, episode reward: {2}, td error: {3}, exp_v: {4}".
                       format(i_episode, running_reward, ep_rs_sum, td_error, exp_v))
                 break

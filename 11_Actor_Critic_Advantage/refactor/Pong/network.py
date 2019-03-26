@@ -7,7 +7,7 @@ import tensorflow as tf
 # ---------------------------------- #
 
 
-def build_network(n_features, n_actions, a_lr=0.00001, c_lr=0.00005, discount=0.99):
+def build_network(n_features, n_actions, a_lr=0.0000001, c_lr=0.0000005, discount=0.99):
     s = tf.placeholder(tf.float32, [1, n_features, n_features], 'state')
     a = tf.placeholder(tf.int32, None, 'act')
     td_error = tf.placeholder(tf.float32, None, 'td_error')  # TD_error
@@ -31,7 +31,7 @@ def build_network(n_features, n_actions, a_lr=0.00001, c_lr=0.00005, discount=0.
         a_exp_v = tf.reduce_mean(a_log_prob * td_error)  # advantage (TD_error) guided loss
 
         a_train_op = tf.train.AdamOptimizer(a_lr).minimize(-a_exp_v)  # minimize(-exp_v) = maximize(exp_v)
-        # a_train_op = tf.train.GradientDescentOptimizer(a_lr).minimize(-a_exp_v)  # minimize(-exp_v) = maximize(exp_v)
+        # a_train_op = tf.train.GradientDescentOptimizer(a_lr).minimize(-a_exp_v)
 
     with tf.variable_scope('critic'):
         c_f = tf.contrib.layers.fully_connected(flat, 512)
