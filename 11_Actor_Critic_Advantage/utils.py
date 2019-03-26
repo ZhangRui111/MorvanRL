@@ -115,7 +115,7 @@ def read_plot_rewards(path, save_path):
 
 
 def restore_parameters(sess, restore_path):
-    saver = tf.train.Saver(max_to_keep=5)
+    saver = tf.train.Saver(max_to_keep=10)
     checkpoint = tf.train.get_checkpoint_state(restore_path)
     if checkpoint and checkpoint.model_checkpoint_path:
         saver.restore(sess, checkpoint.model_checkpoint_path)

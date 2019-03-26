@@ -7,7 +7,7 @@ import numpy as np
 import os
 import tensorflow as tf
 
-from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters
+from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters, show_gray_image
 from refactor.Pong.brain import Actor, Critic
 from refactor.Pong.hyper_parameters import Hyperparameters
 
@@ -19,7 +19,7 @@ def main():
     # np.random.seed(2)
     # tf.set_random_seed(2)  # reproducible
 
-    y_axis_ticks = [-25, -15, 5, 15, 25]
+    y_axis_ticks = [-25, -20, -15, -10, -5, 0]
     weights_path = './logs/weights/'
     data_path = './logs/data/'
     hp = Hyperparameters()
@@ -29,8 +29,8 @@ def main():
     # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-    env_name = 'Pong-ram-v0'
-    # env_name = 'Pong-v0'
+    # env_name = 'Pong-ram-v0'
+    env_name = 'Pong-v0'
     # env_name = 'PongNoFrameskip-v4'
     env = gym.make(env_name)
     env.seed(1)  # reproducible
@@ -58,8 +58,8 @@ def main():
     saver, load_episode = restore_parameters(sess, weights_path)
     probs_path = data_path + 'probs_' + str(0) + '.txt'
     td_exp_path = data_path + 'td_exp_' + str(0) + '.txt'
-    write_file(probs_path, 'probs\n', True)
-    write_file(td_exp_path, 'td_exp\n', True)
+    # write_file(probs_path, 'probs\n', True)
+    # write_file(td_exp_path, 'td_exp\n', True)
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
@@ -72,13 +72,15 @@ def main():
         episode_steps = 0
         track_r = []
         while True:
-            if hp.RENDER:
-                env.render()
+            # if hp.RENDER:
+            #     env.render()
+
+            env.render()
 
             a, probs = actor.choose_action(s)
             probs = np.around(probs, decimals=4)
-            content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
-            write_file(probs_path, content, False)
+            # content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
+            # write_file(probs_path, content, False)
             # print('------------------------------------', probs)
 
             if episode_steps % 50 == 0:  # episode_steps % 10 --> reserve the ball.
@@ -102,8 +104,8 @@ def main():
             # # debug mode # #
             # exp_v, act_prob, log_prob, l1 = actor.learn(s, a, td_error)
             # # debug mode # #
-            content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
-            write_file(td_exp_path, content, False)
+            # content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
+            # write_file(td_exp_path, content, False)
 
             s = s_
             episode_steps += 1
@@ -122,7 +124,7 @@ def main():
                 running_rewards.append(running_reward)
                 # print(len(running_rewards))
                 if len(running_rewards) % hp.SAVED_INTERVAL == 0:
-                    write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                    # write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
                     plot_rewards(running_rewards, y_axis_ticks, data_path)
                 if i_episode % hp.SAVED_INTERVAL_NET == 0 and i_episode != 0:
                     save_parameters(sess, weights_path, saver,
