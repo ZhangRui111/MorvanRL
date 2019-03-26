@@ -1,6 +1,6 @@
 """
 Actor-Critic using TD-error as the Advantage, Reinforcement Learning.
-The Breakout example. Policy is oscillated.
+The Pong example. Policy is oscillated.
 """
 import gym
 import numpy as np
@@ -8,18 +8,19 @@ import os
 import tensorflow as tf
 
 from utils import write_file, plot_rewards, preprocess_image, restore_parameters, save_parameters
-from refactor.Breakout.brain import Actor, Critic
-from refactor.Breakout.hyper_parameters import Hyperparameters
+from refactor.Pong.brain_shly import Actor, Critic
+from refactor.Pong.hyper_parameters import Hyperparameters
+from refactor.Pong.network import build_network
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 def main():
     # np.random.seed(2)
     # tf.set_random_seed(2)  # reproducible
 
-    y_axis_ticks = [-2, -1, 0, 1, 2]
+    y_axis_ticks = [-25, -20, -15, -10, -5, 0]
     weights_path = './logs/weights/'
     data_path = './logs/data/'
     hp = Hyperparameters()
@@ -29,21 +30,14 @@ def main():
     # self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True))
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-    env_name = 'Breakout-ram-v0'
-    # env_name = 'Breakout-v0'
-    # env_name = 'BreakoutNoFrameskip-v4'
+    env_name = 'Pong-v0'
     env = gym.make(env_name)
     env.seed(1)  # reproducible
     env = env.unwrapped
 
-    if env_name == 'Breakout-ram-v0':
-        actor = Actor(sess, n_features=128, n_actions=hp.N_A, lr=hp.LR_A, ram=True)
-        # we need a good teacher, so the teacher should learn faster than the actor
-        critic = Critic(sess, n_features=128, lr=hp.LR_C, discount=hp.GAMMA, ram=True)
-    else:
-        actor = Actor(sess, n_features=hp.N_F, n_actions=hp.N_A, lr=hp.LR_A)
-        # we need a good teacher, so the teacher should learn faster than the actor
-        critic = Critic(sess, n_features=hp.N_F, lr=hp.LR_C, discount=hp.GAMMA)
+    net = build_network(n_features=hp.N_F, n_actions=hp.N_A, a_lr=hp.LR_A, c_lr=hp.LR_C, discount=hp.GAMMA)
+    actor = Actor(sess, net[0])
+    critic = Critic(sess, net[1])
 
     sess.run(tf.global_variables_initializer())
 
@@ -56,14 +50,14 @@ def main():
     total_steps = 0
 
     saver, load_episode = restore_parameters(sess, weights_path)
-    probs_path = data_path + 'probs_' + str(0) + '.txt'
-    td_exp_path = data_path + 'td_exp_' + str(0) + '.txt'
-    write_file(probs_path, 'probs\n', True)
-    write_file(td_exp_path, 'td_exp\n', True)
+    # probs_path = data_path + 'probs_' + str(0) + '.txt'
+    # td_exp_path = data_path + 'td_exp_' + str(0) + '.txt'
+    # write_file(probs_path, 'probs\n', True)
+    # write_file(td_exp_path, 'td_exp\n', True)
 
     for i_episode in range(hp.MAX_EPISODE):
         s = env.reset()
-        if env_name != 'Breakout-ram-v0':
+        if env_name != 'Pong-ram-v0':
             s = preprocess_image(s, hp.N_F)
             # show_gray_image(s)
         # assert to check: whether there is nan in s.
@@ -72,13 +66,15 @@ def main():
         episode_steps = 0
         track_r = []
         while True:
-            if hp.RENDER:
-                env.render()
+            # if hp.RENDER:
+            #     env.render()
+
+            env.render()
 
             a, probs = actor.choose_action(s)
             probs = np.around(probs, decimals=4)
-            content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
-            write_file(probs_path, content, False)
+            # content = str([i_episode, total_steps]) + '  ' + str(probs.tolist()) + '\n'
+            # write_file(probs_path, content, False)
             # print('------------------------------------', probs)
 
             if episode_steps % 50 == 0:  # episode_steps % 10 --> reserve the ball.
@@ -87,7 +83,7 @@ def main():
             # a = np.random.random_integers(0, 3)
 
             s_, r, done, info = env.step(a)
-            if env_name != 'Breakout-ram-v0':
+            if env_name != 'Pong-ram-v0':
                 s_ = preprocess_image(s_, hp.N_F)
                 # show_gray_image(s)
 
@@ -102,8 +98,8 @@ def main():
             # # debug mode # #
             # exp_v, act_prob, log_prob, l1 = actor.learn(s, a, td_error)
             # # debug mode # #
-            content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
-            write_file(td_exp_path, content, False)
+            # content = str([i_episode, total_steps]) + '  ' + str(td_error) + '  ' + str(exp_v) + '\n'
+            # write_file(td_exp_path, content, False)
 
             s = s_
             episode_steps += 1
@@ -112,6 +108,7 @@ def main():
             if done:
                 # print(episode_steps)
                 ep_rs_sum = sum(track_r)
+                aa = track_r.count(1)
 
                 if 'running_reward' not in globals() and 'running_reward' not in locals():
                     running_reward = ep_rs_sum
@@ -121,7 +118,7 @@ def main():
                 running_rewards.append(running_reward)
                 # print(len(running_rewards))
                 if len(running_rewards) % hp.SAVED_INTERVAL == 0:
-                    write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
+                    # write_file(data_path + 'rewards_' + str(i_episode) + '.txt', running_rewards, True)
                     plot_rewards(running_rewards, y_axis_ticks, data_path)
                 if i_episode % hp.SAVED_INTERVAL_NET == 0 and i_episode != 0:
                     save_parameters(sess, weights_path, saver,
@@ -129,12 +126,6 @@ def main():
                 if i_episode % hp.SAVED_INTERVAL == 0 and i_episode != 0:
                     probs_path = data_path + 'probs_' + str(i_episode) + '.txt'
                     exp_v_path = data_path + 'td_exp_' + str(i_episode) + '.txt'
-                if running_reward > hp.DISPLAY_REWARD_THRESHOLD:
-                    hp.RENDER = True  # rendering
-                # # debug mode # #
-                # print('\naction:', a, 'td_error:', td_error, 'exp_v:', exp_v, 'act_prob:', act_prob, 'log_prob:',
-                #       log_prob, 'l1:', l1)
-                # # debug mode # #
                 print("episode: {0}, running reward: {1:.4f}, episode reward: {2}, td error: {3}, exp_v: {4}".
                       format(i_episode, running_reward, ep_rs_sum, td_error, exp_v))
                 break

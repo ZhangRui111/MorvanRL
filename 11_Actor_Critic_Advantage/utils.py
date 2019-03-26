@@ -1,6 +1,8 @@
 import cv2
+# --------Remove these lines if plot.show() in PC----------------#
 import matplotlib as mlp
 mlp.use('Agg')
+# --------Remove these lines if plot.show() in PC----------------#
 import matplotlib.pyplot as plt
 import os
 import time
@@ -24,9 +26,25 @@ class time_ticker(object):
 
 
 def preprocess_image(img, crop_size):
+    # print('0')
+    # plt.imshow(img)
+    # plt.show()
+    # plt.close()
     img = img[30:-15, 5:-5:, :]  # image cropping
+    # print('1')
+    # plt.imshow(img)
+    # plt.show()
+    # plt.close()
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # convert from BGR to GRAY
+    # print('2')
+    # plt.imshow(img, cmap="gray")
+    # plt.show()
+    # plt.close()
     gray = cv2.resize(gray, (crop_size, crop_size), interpolation=cv2.INTER_NEAREST)
+    # print('3')
+    # plt.imshow(img, cmap="gray")
+    # plt.show()
+    # plt.close()
     return gray
 
 
